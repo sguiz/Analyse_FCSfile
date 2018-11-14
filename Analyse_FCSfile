@@ -1,0 +1,104 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Nov  5 18:53:43 2018
+
+@author: sarahguiziou
+"""
+from FlowCytometryTools import FCMeasurement
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+"""GRAPH CYTO FUNCTION
+arguments:
+    gate: binary number
+    - plateID: ID of the plate, folder name corresponding to: PlateID
+    - wells: name of the well, for a file of type: export_wells_extension.fcs
+    extension is defined at the beginning of the function
+    - output_file: name of the output file
+    
+At the beginning of the function:
+    definition of the directory to find the fcs file
+    definition of the directory to store the output file
+    definition of the extension type
+    and of the channel
+
+"""
+def graph_cyto(gate, plateID, wells, output_file):
+    
+    # definition of the directory for the FCS files'
+    directory=r'/Users/sarahguiziou/Desktop/Flowcyto'
+    
+    # definition of the output directory
+    dir_output="/Users/sarahguiziou/Desktop/cyto_graph/"
+    
+    # definition of the extension of the FCS file
+    extension='Bacteria'
+    
+    # definition of the channel of interest for the histograms
+    channel='BL1-H'
+    
+    n=0
+    
+    # SIZE PLOTE
+    plt.subplots(figsize=(8,2.4))    
+    plt.subplots_adjust(hspace=0.0, wspace= 0.0)
+    inp=gate
+    
+    # loop between the different data
+    for x in wells:
+        if inp[n]=='1':
+            c='#00A14B'
+        else:
+            c='#6D6E71'
+        n+=1
+        
+        # Name of the FCS file
+        datafile=directory+'/Plate'+plateID[n-1]+'/export_'+x+'_'+extension+'.fcs'
+        
+        #extract the data, sample correspond to a Dataframe
+        sample = FCMeasurement(ID='Test Sample', datafile=datafile)
+        
+        # bins for the histogram, where logarithmic bins, if not log remove this line
+        logbins = np.geomspace(10, 1000000, 100)
+        
+        # Generation of the subplot, (# plot in vertical, # plot in horizontal, # of this plot)
+        ax=plt.subplot(1,16,n)
+
+        # generation of the histogram in the specific channel
+        ax.hist(sample[channel], bins=logbins, orientation="horizontal", color=c)
+        
+        # log scale
+        plt.yscale('log')
+
+        # lim for y axis
+        ax.set_ylim(10, 500000)
+        
+        # remove x labels
+        ax.xaxis.set_ticks_position('none')
+        ax.set_xticks([])
+        
+        # horizontal lines for the positives and negative controls
+        ax.axhline(95000, color="black", linestyle='--', dashes=(4,4),lw=1)
+        ax.axhline(125, color="black", linestyle='--', dashes=(4,4),lw=1)
+
+        # for the other graphs
+        if n!=1:
+            # no axis labels
+            ax.yaxis.set_ticks_position('none')
+            ax.set_yticks([])
+            
+        # for the first graph
+        else:
+            # y axis fontsize and title
+            plt.yticks(fontsize=12)
+            ax.set_ylabel("FI (A.U.)", fontsize=14)
+            
+    # save the fig in a specific directory in svg and pdf format       
+    plt.savefig(dir_output+output_file+".svg", format="svg")
+    plt.savefig(dir_output+output_file+".pdf", format="pdf")
+    
+
+""" EXAMPLE """
+graph_cyto('0000000000000001',['2', '3', '2', '3', '2', '3', '2', '3','2', '3', '2', '3', '2', '3', '2', '3'],['E1','G1','E11','G10','E7','G7','F7','H7','E4','G4','F4','H4','F1','H1','F10','H12'],"A.B.C.D")
